@@ -1,7 +1,8 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-const apiUrl = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+const defaultUrl = import.meta.env.DEV ? 'http://localhost:5000' : 'https://fleetsphere-nkrv.onrender.com';
+const apiUrl = (import.meta.env.VITE_API_URL || defaultUrl).replace(/\/$/, '');
 
 const api = axios.create({
   baseURL: `${apiUrl}/api`,
