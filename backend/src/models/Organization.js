@@ -54,8 +54,8 @@ const organizationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-organizationSchema.index({ companyCode: 1 });
-organizationSchema.index({ email: 1 });
+// organizationSchema.index({ companyCode: 1 }); // Removed duplicate index
+// organizationSchema.index({ email: 1 }); // Removed duplicate index
 organizationSchema.index({ status: 1 });
 
 module.exports = mongoose.model('Organization', organizationSchema);

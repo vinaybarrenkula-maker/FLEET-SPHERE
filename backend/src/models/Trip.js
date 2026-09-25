@@ -91,6 +91,6 @@ tripSchema.index({ vehicleId: 1, status: 1 });
 tripSchema.index({ driverId: 1, status: 1 });
 tripSchema.index({ status: 1 });
 tripSchema.index({ plannedStartTime: 1 });
-tripSchema.index({ tripNumber: 1 });
+// tripSchema.index({ tripNumber: 1 }); // Removed duplicate index
 
 module.exports = mongoose.model('Trip', tripSchema);

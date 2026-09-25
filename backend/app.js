@@ -9,6 +9,7 @@ const compression = require('compression');
 const { errorHandler } = require('./src/middlewares/errorHandler');
 
 const app = express();
+app.set('trust proxy', true);
 
 // ─── Security Middleware ──────────────────────────────────────
 app.use(helmet());
