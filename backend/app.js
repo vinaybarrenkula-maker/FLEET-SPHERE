@@ -71,29 +71,7 @@ app.use('/api/audit-logs',    require('./src/routes/auditRoutes'));
 app.use('/api/admin',         require('./src/routes/adminRoutes'));
 app.use('/api/dashboard',     require('./src/routes/dashboardRoutes'));
 
-// ─── Temporary Admin Setup Route (For Free Tier Render) ───────
-app.get('/api/setup-admin', async (req, res) => {
-  const User = require('./src/models/User');
-  try {
-    const email = 'admin@fleetsphere.demo';
-    const existingAdmin = await User.findOne({ email });
-    if (existingAdmin) {
-      return res.json({ success: true, message: 'Super Admin already exists!' });
-    }
-    const adminUser = new User({
-      name: 'Super Admin',
-      email: email,
-      password: 'Demo@12345',
-      role: 'SUPER_ADMIN',
-      phone: '9999999999',
-      status: 'ACTIVE'
-    });
-    await adminUser.save();
-    return res.json({ success: true, message: '✅ Super Admin created successfully!' });
-  } catch (err) {
-    return res.status(500).json({ success: false, error: err.message });
-  }
-});
+
 
 // ─── 404 Handler ──────────────────────────────────────────────
 app.use('*', (req, res) => {
