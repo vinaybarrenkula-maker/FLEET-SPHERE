@@ -70,8 +70,49 @@ app.use('/api/notifications', require('./src/routes/notificationRoutes'));
 app.use('/api/audit-logs',    require('./src/routes/auditRoutes'));
 app.use('/api/admin',         require('./src/routes/adminRoutes'));
 app.use('/api/dashboard',     require('./src/routes/dashboardRoutes'));
-
-
+// ─── Temporary Demo Setup Route ───────
+app.get('/api/setup-demo', async (req, res) => {
+  const User = require('./src/models/User');
+  try {
+    const demoUsers = [
+      {
+        name: 'Fleet Manager Demo',
+        email: 'manager@fleetsphere.demo',
+        password: 'Demo@12345',
+        role: 'FLEET_MANAGER',
+        phone: '8888888888',
+        status: 'ACTIVE'
+      },
+      {
+        name: 'Branch Manager Demo',
+        email: 'branch@fleetsphere.demo',
+        password: 'Demo@12345',
+        role: 'BRANCH_MANAGER',
+        phone: '7777777777',
+        status: 'ACTIVE'
+      },
+      {
+        name: 'Finance Officer Demo',
+        email: 'finance@fleetsphere.demo',
+        password: 'Demo@12345',
+        role: 'FINANCE_OFFICER',
+        phone: '6666666666',
+        status: 'ACTIVE'
+      }
+    ];
+    
+    for (const user of demoUsers) {
+      const exists = await User.findOne({ email: user.email });
+      if (!exists) {
+        await new User(user).save();
+      }
+    }
+    
+    return res.json({ success: true, message: '✅ All demo users created successfully!' });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 // ─── 404 Handler ──────────────────────────────────────────────
 app.use('*', (req, res) => {
