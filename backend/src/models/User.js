@@ -47,9 +47,10 @@ const userSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['ACTIVE', 'INACTIVE', 'SUSPENDED'],
-      default: 'ACTIVE',
+      enum: ['ACTIVE', 'INACTIVE', 'SUSPENDED', 'PENDING', 'REJECTED'],
+      default: 'PENDING',
     },
+    rejectionReason: String,
     lastLogin: Date,
     passwordResetToken: String,
     passwordResetExpires: Date,

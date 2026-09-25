@@ -88,7 +88,7 @@ exports.registerDriver = async (req, res, next) => {
       organizationId,
       branchId,
       profileImage: profilePhoto || undefined,
-      status: 'ACTIVE',
+      status: 'PENDING',
     });
 
     const driver = await Driver.create({
@@ -133,14 +133,43 @@ exports.registerDriver = async (req, res, next) => {
   }
 };
 
-// POST /api/auth/register (Public generic registration disabled)
+// POST /api/auth/register (Public generic registration)
 exports.register = async (req, res, next) => {
-  return errorResponse(
-    res,
-    'Public registration is disabled. Super Admin, Fleet Manager, Branch Manager, and Finance Officer accounts must be created by an authorized administrator. Drivers must register at /driver/register.',
-    403,
-    'PUBLIC_REGISTRATION_DISABLED'
-  );
+  try {
+    const { name, email, phone, password, role } = req.body;
+
+    if (!name || !email || !password || !phone || !role) {
+      return errorResponse(res, 'All fields are required.', 400);
+    }
+
+    const allowedRoles = ['FLEET_MANAGER', 'BRANCH_MANAGER', 'FINANCE_OFFICER', 'DRIVER'];
+    if (!allowedRoles.includes(role)) {
+      return errorResponse(res, 'Invalid role selection.', 400);
+    }
+
+    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
+    if (existingUser) {
+      return errorResponse(res, 'An account with this email already exists.', 409, 'EMAIL_EXISTS');
+    }
+
+    const user = await User.create({
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      password,
+      phone: phone.trim(),
+      role,
+      status: 'PENDING',
+    });
+
+    return successResponse(
+      res,
+      'Registration submitted successfully. Your account is waiting for Super Admin approval.',
+      {},
+      201
+    );
+  } catch (err) {
+    next(err);
+  }
 };
 
 // POST /api/auth/login
@@ -153,7 +182,16 @@ exports.login = async (req, res, next) => {
 
     const user = await User.findOne({ email: email.toLowerCase().trim() }).select('+password');
     if (!user) return errorResponse(res, 'Invalid email or password.', 401, 'INVALID_CREDENTIALS');
-    if (user.status !== 'ACTIVE') return errorResponse(res, 'Your account is inactive. Contact administrator.', 403, 'ACCOUNT_INACTIVE');
+    
+    if (user.status === 'PENDING') {
+      return errorResponse(res, 'Your account is waiting for Super Admin approval.', 403, 'ACCOUNT_PENDING');
+    }
+    if (user.status === 'REJECTED') {
+      return errorResponse(res, 'Your registration request was rejected. Please contact the administrator.', 403, 'ACCOUNT_REJECTED');
+    }
+    if (user.status !== 'ACTIVE') {
+      return errorResponse(res, 'Your account is inactive. Contact administrator.', 403, 'ACCOUNT_INACTIVE');
+    }
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) return errorResponse(res, 'Invalid email or password.', 401, 'INVALID_CREDENTIALS');

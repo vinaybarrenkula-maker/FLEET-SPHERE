@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { dashboardApi } from '../api';
-import { Truck, AlertTriangle, IndianRupee, Map, Users, RefreshCw, TrendingUp, ShieldCheck, Zap } from 'lucide-react';
+import { dashboardApi, adminApi } from '../api';
+import { Truck, AlertTriangle, IndianRupee, Map, Users, RefreshCw, TrendingUp, ShieldCheck, Zap, UserPlus, CheckCircle, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { useAuthStore } from '../store/authStore';
 
 const StatCard = ({ title, value, icon: Icon, subtext, tone = 'coral' }) => {
   const toneStyles = {
@@ -78,22 +79,50 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(DEFAULT_DASHBOARD_DATA);
   const [expenseData, setExpenseData] = useState(DEFAULT_EXPENSE_DATA);
+  const [pendingUsers, setPendingUsers] = useState([]);
+  const { user } = useAuthStore();
 
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const [overviewRes, expenseRes] = await Promise.all([
+      const promises = [
         dashboardApi.getOverview(),
         dashboardApi.getExpenseAnalytics({ months: 6 })
-      ]);
+      ];
+      if (user?.role === 'SUPER_ADMIN') {
+        promises.push(adminApi.getPendingUsers().catch(() => ({ data: { data: { users: [] } } })));
+      }
+
+      const [overviewRes, expenseRes, pendingRes] = await Promise.all(promises);
       if (overviewRes?.data?.data) setData(overviewRes.data.data);
       if (expenseRes?.data?.data) setExpenseData(expenseRes.data.data);
+      if (pendingRes?.data?.data?.users) setPendingUsers(pendingRes.data.data.users);
     } catch (error) {
       // Graceful fallback to default telemetry
       setData(DEFAULT_DASHBOARD_DATA);
       setExpenseData(DEFAULT_EXPENSE_DATA);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleApproveUser = async (id) => {
+    try {
+      await adminApi.approveUser(id);
+      toast.success('User approved successfully.');
+      setPendingUsers(pendingUsers.filter(u => u._id !== id));
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Approval failed');
+    }
+  };
+
+  const handleRejectUser = async (id) => {
+    try {
+      await adminApi.rejectUser(id, { rejectionReason: 'Rejected by Super Admin' });
+      toast.success('User registration rejected.');
+      setPendingUsers(pendingUsers.filter(u => u._id !== id));
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Rejection failed');
     }
   };
 
@@ -140,6 +169,64 @@ const Dashboard = () => {
           </button>
         </div>
       </div>
+
+      {/* Registration Requests (Super Admin Only) */}
+      {user?.role === 'SUPER_ADMIN' && pendingUsers.length > 0 && (
+        <div className="card-clean p-6 bg-white border border-[#e7e4e0] rounded-2xl shadow-2xs">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2">
+              <UserPlus className="w-5 h-5 text-[#ff6b4a]" />
+              <div>
+                <h3 className="font-heading font-bold text-base text-[#3d3a37]">
+                  Pending Registration Requests
+                </h3>
+                <p className="text-xs text-[#78716c]">Staff members waiting for approval</p>
+              </div>
+            </div>
+            <span className="px-2 py-1 bg-[#fffbeb] text-[#b45309] rounded-md border border-[#fde68a] text-xs font-bold">
+              {pendingUsers.length} Requests
+            </span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm whitespace-nowrap">
+              <thead className="bg-[#fafaf9] text-[#78716c] uppercase text-[10px] font-bold tracking-wider">
+                <tr>
+                  <th className="px-4 py-3 rounded-l-xl">Name</th>
+                  <th className="px-4 py-3">Email</th>
+                  <th className="px-4 py-3">Role</th>
+                  <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3 rounded-r-xl text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#e7e4e0]/50">
+                {pendingUsers.map((u) => (
+                  <tr key={u._id} className="hover:bg-[#fff5f3]/20 transition-colors">
+                    <td className="px-4 py-3 font-semibold text-[#3d3a37]">{u.name}</td>
+                    <td className="px-4 py-3 text-[#78716c]">{u.email}</td>
+                    <td className="px-4 py-3">
+                      <span className="px-2.5 py-1 rounded-md text-[10px] font-bold bg-[#faf5ff] text-[#7c3aed] border border-[#ddd6fe]">
+                        {u.role}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-[#a8a29e]">{new Date(u.createdAt).toLocaleDateString()}</td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex justify-end gap-2">
+                        <button onClick={() => handleApproveUser(u._id)} className="p-1.5 rounded-lg bg-[#ecfdf5] text-[#047857] hover:bg-[#d1fae5] transition-colors" title="Approve">
+                          <CheckCircle className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => handleRejectUser(u._id)} className="p-1.5 rounded-lg bg-[#fff1f2] text-[#e11d48] hover:bg-[#ffe4e6] transition-colors" title="Reject">
+                          <XCircle className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">

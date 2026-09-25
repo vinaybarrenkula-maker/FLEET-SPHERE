@@ -12,6 +12,12 @@ export const authApi = {
   resetPassword: (data) => api.post('/auth/reset-password', data),
 };
 
+export const adminApi = {
+  getPendingUsers: () => api.get('/admin/users/pending'),
+  approveUser: (id) => api.patch(`/admin/users/${id}/approve`),
+  rejectUser: (id, data) => api.patch(`/admin/users/${id}/reject`, data),
+};
+
 export const vehicleApi = {
   getAll: (params) => api.get('/vehicles', { params }),
   getById: (id) => api.get(`/vehicles/${id}`),

@@ -281,15 +281,23 @@ const Login = () => {
             </button>
           </form>
 
-          {/* Driver Registration Link */}
+          {/* Registration Links */}
           <div className="border-t border-[#e7e4e0] pt-4 text-center">
-            <p className="text-xs text-[#78716c]">Joining as a new commercial driver?</p>
-            <Link
-              to="/driver/register"
-              className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-bold text-[#b93f25] hover:text-[#ff6b4a] transition-colors"
-            >
-              Driver Verification & Onboarding Portal <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+            <p className="text-xs text-[#78716c]">Don't have an account?</p>
+            <div className="flex flex-col gap-2 mt-2">
+              <Link
+                to="/register"
+                className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-[#3d3a37] hover:text-[#ff6b4a] transition-colors"
+              >
+                Register for Staff / Management Portal <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+              <Link
+                to="/driver/register"
+                className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-[#b93f25] hover:text-[#ff6b4a] transition-colors"
+              >
+                Driver Verification & Onboarding Portal <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
           </div>
         </div>
 

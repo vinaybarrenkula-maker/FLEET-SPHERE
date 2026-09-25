@@ -21,6 +21,7 @@ import Expenses from './pages/Expenses';
 import Documents from './pages/Documents';
 import Notifications from './pages/Notifications';
 import AuditLogs from './pages/AuditLogs';
+import Register from './pages/Register';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { isAuthenticated, user } = useAuthStore();
@@ -68,8 +69,10 @@ const App = () => {
           path="/driver/register"
           element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <DriverRegister />}
         />
-        {/* Disable public generic registration - redirect to login */}
-        <Route path="/register" element={<Navigate to="/login" replace />} />
+        <Route
+          path="/register"
+          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Register />}
+        />
 
         {/* Protected Dashboard & App Routes */}
         <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
